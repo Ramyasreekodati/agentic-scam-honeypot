@@ -1,0 +1,341 @@
+[
+  {
+    "sessionId": "19cfbf4655772bb9",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "[EMAIL SCAN] From: Team BankBazaar <creditcard+ratealert@bankbazaar.com> | Type: undefined",
+    "timestamp": "2026-03-17T15:05:08.655Z"
+  },
+  {
+    "sessionId": "19cfa87933e3539b",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "[EMAIL SCAN] From: Fibe <notification@info.fibe.in> | Type: undefined",
+    "timestamp": "2026-03-17T15:19:19.694Z"
+  },
+  {
+    "sessionId": "19cd470d01e06e5d",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "[EMAIL SCAN] From: Ankler Monday Morning QBs <theankler+monday-morning-quarterbacks@substack.com> | Type: undefined",
+    "timestamp": "2026-03-17T16:03:36.044Z"
+  },
+  {
+    "sessionId": "19cd2938c78cfc1b",
+    "bankAccounts": [
+      "87582664453"
+    ],
+    "upiIds": [],
+    "phishingLinks": [
+      "https://interviewkickstart.zoom.us/w/87582664453?tk=DINYQ6gttpYuF-Idk4F5mFaVY-"
+    ],
+    "phoneNumbers": [
+      "8758266445"
+    ],
+    "suspiciousKeywords": [],
+    "notes": "[EMAIL SCAN] From: Interview Kickstart <no-reply@zoom.us> | Type: undefined",
+    "timestamp": "2026-03-17T16:03:47.333Z"
+  },
+  {
+    "sessionId": "19cd10e46c75cf54",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "[EMAIL SCAN] From: \"Freelancer.com\" <noreply@freelancer.com> | Type: undefined",
+    "timestamp": "2026-03-17T16:03:53.018Z"
+  },
+  {
+    "sessionId": "19cd10e46c75cf54",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "[EMAIL SCAN] From: \"Freelancer.com\" <noreply@freelancer.com> | Type: undefined",
+    "timestamp": "2026-03-17T16:03:54.533Z"
+  },
+  {
+    "sessionId": "19cd030251d4eeb7",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "[EMAIL SCAN] From: Replit <contact@mail.replit.com> | Type: undefined",
+    "timestamp": "2026-03-17T16:03:57.881Z"
+  },
+  {
+    "sessionId": "19cc23e21eaf0bb2",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "[EMAIL SCAN] From: LinkedIn <updates-noreply@linkedin.com> | Type: undefined",
+    "timestamp": "2026-03-17T16:08:06.709Z"
+  },
+  {
+    "sessionId": "19cbf4a354841293",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "[EMAIL SCAN] From: Replit <contact@mail.replit.com> | Type: undefined",
+    "timestamp": "2026-03-17T16:08:20.305Z"
+  },
+  {
+    "sessionId": "19cb4b00e93c5361",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "[EMAIL SCAN] From: Prestige Junkie from The Ankler <theankler+prestige-junkie@substack.com> | Type: undefined",
+    "timestamp": "2026-03-17T16:13:08.632Z"
+  },
+  {
+    "sessionId": "19cb47abee0e6761",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "[EMAIL SCAN] From: The Pragmatic Engineer <pragmaticengineer+deepdives@substack.com> | Type: undefined",
+    "timestamp": "2026-03-17T16:13:11.356Z"
+  },
+  {
+    "sessionId": "19cb35a3bf5b1b5b",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "[EMAIL SCAN] From: Team BankBazaar <creditcard+ratealert@bankbazaar.com> | Type: undefined",
+    "timestamp": "2026-03-17T16:13:18.215Z"
+  },
+  {
+    "sessionId": "19cad38df1d53dac",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "[EMAIL SCAN] From: FIBE <noreply@fibe.in> | Type: undefined",
+    "timestamp": "2026-03-17T16:13:36.206Z"
+  },
+  {
+    "sessionId": "19d0fd261f00dd3f",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [
+      "Apply Now",
+      "Zero-width characters",
+      "Spam filter evasion"
+    ],
+    "scamType": "Job Offer",
+    "scammerSentiment": "Patient",
+    "nextBestAction": "Ask for more details about the job and application process",
+    "notes": "[EMAIL SCAN] From: Team Unstop <noreply@unstop.news> | Type: Job Offer",
+    "timestamp": "2026-03-21T10:02:49.869Z"
+  },
+  {
+    "sessionId": "19d0f3549d4d4eef",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [
+      "without the premium price",
+      "zero-width characters",
+      "hidden content to bypass spam filters"
+    ],
+    "scamType": "Other",
+    "scammerSentiment": "Patient",
+    "nextBestAction": "Feign interest in the degree program to elicit contact details or payment links",
+    "notes": "[EMAIL SCAN] From: Coursera <Coursera@m.learn.coursera.org> | Type: Other",
+    "timestamp": "2026-03-21T10:05:30.052Z"
+  },
+  {
+    "sessionId": "19d0d21ae8a2aeeb",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "scamType": "Job Offer",
+    "scammerSentiment": "Patient",
+    "nextBestAction": "Continue engagement",
+    "notes": "[EMAIL SCAN] From: Jooble <subscribe@in.jooble.org> | Type: Job Offer",
+    "timestamp": "2026-03-21T10:06:16.005Z"
+  },
+  {
+    "sessionId": "19d07f04ae46c5b0",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "[EMAIL SCAN] From: Jooble <subscribe@in.jooble.org> | Type: undefined",
+    "timestamp": "2026-03-21T10:07:28.749Z"
+  },
+  {
+    "sessionId": "web-sim-j2dez4k7v",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [
+      "http://bank-verify.in"
+    ],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "SCAM TYPE: undefined | STRATEGY: undefined | TACTICS:  | PERSONA: Aman Gupta",
+    "timestamp": "2026-03-21T14:12:13.500Z"
+  },
+  {
+    "sessionId": "web-sim-3kw7dcnef",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [
+      "http://bank-verify.in"
+    ],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "SCAM TYPE: undefined | STRATEGY: undefined | TACTICS:  | PERSONA: Siddharth",
+    "timestamp": "2026-03-21T14:14:25.536Z"
+  },
+  {
+    "sessionId": "web-sim-kggx208k6",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [
+      "http://bank-verify.in"
+    ],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [],
+    "notes": "SCAM TYPE: undefined | STRATEGY: undefined | TACTICS:  | PERSONA: Uncle Ji (Mr. Khanna)",
+    "timestamp": "2026-03-21T14:37:56.464Z"
+  },
+  {
+    "sessionId": "web-sim-g0is0skqk",
+    "bankAccounts": [
+      "9876543210"
+    ],
+    "upiIds": [],
+    "phishingLinks": [],
+    "phoneNumbers": [
+      "9876543210"
+    ],
+    "suspiciousKeywords": [],
+    "notes": "SCAM TYPE: undefined | STRATEGY: undefined | TACTICS:  | PERSONA: Siddharth",
+    "timestamp": "2026-03-21T15:20:05.150Z"
+  },
+  {
+    "sessionId": "3135",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [
+      "https://accounts.google.com/AccountChooser?Email=kodatiramyasree123@gmail.com&continue=https://myaccount.google.com/alert/nt/1776498314200?rfn%3D20%26rfnc%3D1%26eid%3D7195953268651780879%26et%3D0",
+      "https://myaccount.google.com/notifications"
+    ],
+    "phoneNumbers": [
+      "0000000000"
+    ],
+    "suspiciousKeywords": [
+      "App password created",
+      "someone might be using your account",
+      "secure your account now",
+      "urgency",
+      "authority impersonation"
+    ],
+    "scamType": "Other",
+    "scammerSentiment": "Patient",
+    "nextBestAction": "Feign technical confusion",
+    "notes": "[GENERIC EMAIL SCAN] From: Google <no-reply@accounts.google.com> | Persona: Uncle Ji (Mr. Khanna) | Reason: This message is a brand impersonation phishing attempt mimicking a Google Security Alert. It notifies the user about an 'App password' creation to create a sense of urgency and fear. This tactic is designed to trick the recipient into clicking a link to 'secure' their account, which typically leads to a credential harvesting site or a session-stealing page. Although the URLs appear to point to legitimate Google domains, the unsolicited nature and the request for immediate security action are key indicators of a phishing campaign.",
+    "timestamp": "2026-04-18T07:50:18.346Z"
+  },
+  {
+    "sessionId": "3133",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [
+      "https://accounts.google.com/RecoverAccount?fpOnly=1&source=ancp&Email=kodatiramayasree123@gmail.com&et=0",
+      "https://myaccount.google.com/notifications"
+    ],
+    "phoneNumbers": [
+      "0000000000"
+    ],
+    "suspiciousKeywords": [
+      "password was changed",
+      "recover your account",
+      "authority impersonation",
+      "important changes",
+      "2026 Google LLC"
+    ],
+    "scamType": "Other",
+    "scammerSentiment": "Patient",
+    "nextBestAction": "Feign technical confusion",
+    "notes": "[GENERIC EMAIL SCAN] From: Google <no-reply@accounts.google.com> | Persona: Siddharth | Reason: This message is a phishing attempt mimicking an official Google security notification. While it uses legitimate-looking URLs, the presence of a future copyright date (© 2026 Google LLC) is a common sign of a poorly constructed fraudulent template. The email employs a classic social engineering tactic by creating a sense of urgency regarding a password change to trick the recipient into engaging with the recovery link for credential harvesting.",
+    "timestamp": "2026-04-18T07:51:23.533Z"
+  },
+  {
+    "sessionId": "3132",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [
+      "https://accounts.google.com/AccountChooser?Email=kodatiramyasree123@gmail.com&continue=https://myaccount.google.com/secure-account?utm_source%3Demail%26utm_medium%3Demail%26utm_campaign%3Dph%26src%3D14%26aneid%3D8268302096508112029"
+    ],
+    "phoneNumbers": [
+      "0000000000"
+    ],
+    "suspiciousKeywords": [
+      "locked out",
+      "changes made by someone else",
+      "protect your account",
+      "authority impersonation",
+      "fake copyright date 2026"
+    ],
+    "scamType": "Other",
+    "scammerSentiment": "Patient",
+    "nextBestAction": "Feign technical confusion",
+    "notes": "[GENERIC EMAIL SCAN] From: Google <no-reply@accounts.google.com> | Persona: Mrs. Revathi | Reason: The message contains a future copyright date (2026), which is a common error in fraudulent phishing templates. It uses social engineering by claiming an account was recovered to create urgency, encouraging the recipient to click links that lead to credential harvesting or account takeover attempts.",
+    "timestamp": "2026-04-18T07:52:08.383Z"
+  },
+  {
+    "sessionId": "3129",
+    "bankAccounts": [],
+    "upiIds": [],
+    "phishingLinks": [
+      "https://sdcourse.substack.com/p/day-52-impleme=",
+      "https://sdcourse.substack.com/fb=",
+      "https://substack.com/redirect/b0b672d9-fec0-4c3d-b3cc-6dec838f7a20=",
+      "https://sdcourse.substack.com/p/day-52-implement-a-simple-inverted",
+      "https://sdcourse.substack.com/fbbab0d8",
+      "https://substack.com/redirect/b0b672d9-fec0-4c3d-b3cc-6dec838f7a20?j=3DeyJ1IjoiNmM5em1qIn0.2Gyv76hCjKYsav2GDUaWOgBL-798E0goG_XKYlQ-TPY"
+    ],
+    "phoneNumbers": [],
+    "suspiciousKeywords": [
+      "limited time",
+      "40% off",
+      "Professional Growth",
+      "Close that gap today"
+    ],
+    "scamType": "Other",
+    "scammerSentiment": "Patient",
+    "nextBestAction": "Continue engagement",
+    "notes": "[GENERIC EMAIL SCAN] From: System Design Course from SDIR <sdcourse+system-design-course-with-java-and@substack.com> | Persona: Mrs. Revathi | Reason: The message is an unsolicited marketing email for a paid course on Substack. It requests user action (clicking links) and money (purchasing a course with a discount), which meets the criteria for unsolicited solicitation in this security context.",
+    "timestamp": "2026-04-18T07:52:57.556Z"
+  }
+]
