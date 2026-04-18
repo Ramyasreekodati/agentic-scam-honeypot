@@ -1,60 +1,61 @@
 const { google } = require('googleapis');
 const path = require('path');
 const fs = require('fs').promises;
-const { authenticate } = require('@google-cloud/local-auth');
 const scamDetector = require('./scamDetector');
 const agentEngine = require('./agentEngine');
 const intelligenceExtractor = require('./intelligenceExtractor');
 const intelligenceStore = require('../utils/intelligenceStore');
 
 const SCOPES = ['https://www.googleapis.com/auth/gmail.modify'];
-const TOKEN_PATH = path.join(process.cwd(), 'token.json');
 const CREDENTIALS_PATH = path.join(process.cwd(), 'credentials.json');
 
 class GmailService {
   constructor() {
-    this.auth = null;
+    this.processedIds = new Set(); // Simple in-memory de-duplication
   }
 
-  async authorize() {
-    try {
-      if (this.auth) return true;
-      
-      try {
-        const token = await fs.readFile(TOKEN_PATH);
-        const credentials = JSON.parse(await fs.readFile(CREDENTIALS_PATH));
-        const { client_secret, client_id, redirect_uris } = credentials.installed || credentials.web;
-        this.auth = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0]);
-        this.auth.setCredentials(JSON.parse(token));
-        return true;
-      } catch (err) {
-        // Token missing or invalid, do not hang the server
-        console.warn('[GmailService] token.json not found or invalid. Manual auth required.');
-        return false;
-      }
-    } catch (err) {
-      console.error('[GmailService] OAuth Error:', err.message);
-      return false;
-    }
+  /**
+   * Generates the OAuth URL for a user to authorize.
+   */
+  generateAuthUrl() {
+    const credentials = JSON.parse(require('fs').readFileSync(CREDENTIALS_PATH));
+    const { client_secret, client_id, redirect_uris } = credentials.installed || credentials.web;
+    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0] || 'http://localhost:3000/api/auth/google/callback');
+
+    return oAuth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: SCOPES,
+      prompt: 'consent'
+    });
   }
 
-  async getAuthorizedEmail() {
-    if (!this.auth) await this.authorize();
-    if (!this.auth) return 'Not Authorized';
-    try {
-      const gmail = google.gmail({ version: 'v1', auth: this.auth });
-      const res = await gmail.users.getProfile({ userId: 'me' });
-      return res.data.emailAddress;
-    } catch (err) {
-      return 'Unknown Account';
-    }
+  async getTokens(code) {
+    const credentials = JSON.parse(await fs.readFile(CREDENTIALS_PATH));
+    const { client_secret, client_id, redirect_uris } = credentials.installed || credentials.web;
+    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0] || 'http://localhost:3000/api/auth/google/callback');
+    const { tokens } = await oAuth2Client.getToken(code);
+    return tokens;
   }
 
-  async checkMail(limit = 10) {
-    if (!this.auth) await this.authorize();
-    if (!this.auth) return { status: 'error', message: 'Not authorized' };
+  _getOAuthClient(tokens) {
+    const credentials = JSON.parse(require('fs').readFileSync(CREDENTIALS_PATH));
+    const { client_secret, client_id, redirect_uris } = credentials.installed || credentials.web;
+    const oAuth2Client = new google.auth.OAuth2(client_id, client_secret, redirect_uris[0] || 'http://localhost:3000/api/auth/google/callback');
+    oAuth2Client.setCredentials(tokens);
+    return oAuth2Client;
+  }
 
-    const gmail = google.gmail({ version: 'v1', auth: this.auth });
+  async getAuthorizedEmail(tokens) {
+    const auth = this._getOAuthClient(tokens);
+    const gmail = google.gmail({ version: 'v1', auth });
+    const res = await gmail.users.getProfile({ userId: 'me' });
+    return res.data.emailAddress;
+  }
+
+  async checkMail(tokens, limit = 10) {
+    const auth = this._getOAuthClient(tokens);
+    const gmail = google.gmail({ version: 'v1', auth });
+
     const res = await gmail.users.messages.list({
       userId: 'me',
       q: 'is:unread in:anywhere',
@@ -65,78 +66,68 @@ class GmailService {
     const results = [];
 
     for (const msg of messages) {
+        if (this.processedIds.has(msg.id)) continue; // Fix 5: Deduplication
+
         const fullMsg = await gmail.users.messages.get({ userId: 'me', id: msg.id });
         const snippet = fullMsg.data.snippet;
         const threadId = fullMsg.data.threadId;
-        const fromHeader = fullMsg.data.payload.headers.find(h => h.name === 'From').value;
-        const subject = fullMsg.data.payload.headers.find(h => h.name === 'Subject').value;
+        const headers = fullMsg.data.payload.headers;
+        const fromHeader = headers.find(h => h.name === 'From')?.value || 'Unknown';
+        const subject = headers.find(h => h.name === 'Subject')?.value || '(No Subject)';
 
-        // Mark as read (always, so we don't process again)
+        // Mark as read immediately to prevent loop
         await gmail.users.messages.batchModify({
             userId: 'me',
             ids: [msg.id],
             removeLabelIds: ['UNREAD']
         });
 
-        // Throttle AI calls to stay within Free Tier limits
-        await new Promise(r => setTimeout(r, 1500));
-        const detection = await scamDetector.detect({ text: snippet });
+        this.processedIds.add(msg.id);
+
+        // Analysis logic (Fix 4)
+        const detection = await scamDetector.detect({ text: snippet, subject });
         
+        let status = 'ignored';
+        let agentResponse = null;
+
         if (detection.isScam) {
-            console.log(`[GmailService] SCAM DETECTED in email from ${fromHeader}`);
+            console.log(`[GmailService] SCAM DETECTED: From ${fromHeader}`);
             
-            // Generate Agent Reply
+            // Fix 8 & 9: Real-time agent logic
             const response = await agentEngine.generateResponse(threadId, { text: snippet }, [], { channel: 'Email', sender: fromHeader });
             
             if (response && response.text) {
-                const { text } = response;
-
-                // Extract Intelligence
+                agentResponse = response.text;
                 const intelligence = await intelligenceExtractor.extract([{ text: snippet }]);
-                const agentNotes = `[EMAIL SCAN] From: ${fromHeader} | Type: ${intelligence.scamType}`;
-                await intelligenceStore.save(threadId, intelligence, agentNotes);
-
-                // Send Reply
-                await this.sendReply(threadId, fromHeader, subject, text);
-                results.push({ 
-                    id: msg.id, 
-                    from: fromHeader, 
-                    subject: subject, 
-                    isScam: true, 
-                    status: 'replied',
-                    reason: detection.reason,
-                    agentResponse: text,
-                    snippet: snippet
-                });
-            } else {
-                console.warn(`[GmailService] AI failed to generate specific reply for ${fromHeader}, skipping response.`);
-                results.push({ 
-                    id: msg.id, 
-                    from: fromHeader, 
-                    subject: subject, 
-                    isScam: true, 
-                    status: 'ignored',
-                    reason: detection.reason,
-                    snippet: snippet
-                });
+                await intelligenceStore.save(threadId, intelligence, `[GMAIL SCAN] From: ${fromHeader}`);
+                
+                await this.sendReply(auth, threadId, fromHeader, subject, agentResponse);
+                status = 'replied';
             }
-        } else {
-            results.push({ 
-                id: msg.id, 
-                from: fromHeader, 
-                subject: subject, 
-                isScam: false, 
-                status: 'ignored',
-                snippet: snippet
-            });
         }
+
+        results.push({ 
+            id: msg.id, 
+            from: fromHeader, 
+            subject: subject, 
+            isScam: detection.isScam, 
+            status,
+            reason: detection.reason,
+            agentResponse,
+            snippet
+        });
+    }
+
+    // Fix 2: Strict validation - if no real emails found
+    if (results.length === 0) {
+        return { message: "No new unread emails found." };
     }
 
     return results;
   }
 
-  async sendReply(threadId, to, subject, body) {
-    const gmail = google.gmail({ version: 'v1', auth: this.auth });
+  async sendReply(auth, threadId, to, subject, body) {
+    const gmail = google.gmail({ version: 'v1', auth });
     const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
     const messageParts = [
       `From: me`,
@@ -159,10 +150,7 @@ class GmailService {
 
     await gmail.users.messages.send({
       userId: 'me',
-      requestBody: {
-        raw: encodedMessage,
-        threadId: threadId
-      }
+      requestBody: { raw: encodedMessage, threadId }
     });
   }
 }

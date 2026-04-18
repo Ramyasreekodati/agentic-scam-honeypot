@@ -21,12 +21,12 @@
             <h1>HONEYPOT<span>.AI</span></h1>
         </div>
         <div class="status-badge" style="gap: 15px;">
-            <button id="simulate-scan-btn" class="btn-primary" style="border-radius: 20px; padding: 4px 12px; font-size: 0.65rem; border-color: #00f2ff; color: #00f2ff; background: rgba(0, 242, 255, 0.05); cursor: pointer;">SIMULATE GLOBAL SCAN (NO LOGIN)</button>
-            <button id="config-mailbox-btn" class="btn-secondary" style="border-radius: 20px; padding: 4px 12px; font-size: 0.65rem; border-color: #fbbc04; color: #fbbc04;">CONFIGURE GLOBAL ACCESS</button>
-            <button id="email-scan-btn" class="btn-secondary" style="border-radius: 20px; padding: 4px 12px; font-size: 0.65rem; border-color: #34a853; color: #34a853;">SCAN ANY EMAIL (IMAP)</button>
+            <!-- Fix 2: Removed Simulation button from main nav -->
+            <button id="config-mailbox-btn" class="btn-secondary" style="border-radius: 20px; padding: 4px 12px; font-size: 0.65rem; border-color: #fbbc04; color: #fbbc04;">CONFIGURE ACCESS</button>
+            <button id="email-scan-btn" class="btn-secondary" style="border-radius: 20px; padding: 4px 12px; font-size: 0.65rem; border-color: #34a853; color: #34a853;">SCAN IMAP</button>
             <button id="gmail-scan-btn" class="btn-secondary" style="border-radius: 20px; padding: 4px 12px; font-size: 0.65rem; border-color: #ea4335; color: #ea4335;">SCAN GMAIL API</button>
-            <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="pulse"></span> System Active
+            <div id="auth-status" style="display: flex; align-items: center; gap: 8px;">
+                <span class="pulse"></span> <span id="user-display">Guest</span>
             </div>
         </div>
     </nav>
@@ -39,15 +39,15 @@
                 <button id="close-config-btn" class="btn-tiny" style="color: #ff4757; font-weight: bold;">[X] CLOSE</button>
             </div>
             <div class="modal-body">
-                <p class="text-secondary small-text mb-1">To enable the AI Agent for ANY user globally, connect your Gmail safely via OAuth or provide your own IMAP credentials.</p>
+                <p class="text-secondary small-text mb-1">Connect your Gmail via OAuth2 or provide your own IMAP credentials to start real-time monitoring.</p>
                 
                 <div class="config-grid">
                     <div class="config-card">
                         <span class="platform-icon">📦</span>
                         <h4>GMAIL (OAUTH 2.0)</h4>
-                        <p class="text-secondary tiny-text">Global users can sign in securely with their Google Account.</p>
-                        <button class="btn-primary mt-1" disabled style="opacity: 0.6;">START OAUTH FLOW</button>
-                        <span class="badge safe mt-1">AVAILABLE GLOBALLY</span>
+                        <p class="text-secondary tiny-text">Sign in securely with your Google Account.</p>
+                        <!-- Fix 1: Enabled OAuth flow -->
+                        <a href="/api/auth/google" class="btn-primary mt-1" style="text-decoration: none; text-align: center; display: block;">LOGIN WITH GOOGLE</a>
                     </div>
 
                     <div class="config-card">
@@ -55,16 +55,12 @@
                         <h4>ANY EMAIL (IMAP)</h4>
                         <p class="text-secondary tiny-text">Connect to Yahoo, Outlook, or private mailboxes.</p>
                         <div class="input-group-tiny mt-1">
-                            <input type="text" placeholder="IMAP Server (e.g., imap.gmail.com)">
-                            <input type="text" placeholder="Email Address">
-                            <input type="password" placeholder="App Password">
+                            <input type="text" id="imap-host" placeholder="IMAP Server (e.g., imap.gmail.com)">
+                            <input type="text" id="imap-user" placeholder="Email Address">
+                            <input type="password" id="imap-pass" placeholder="App Password">
                         </div>
-                        <button class="btn-secondary mt-1">CONNECT MAILBOX</button>
+                        <button id="connect-imap-btn" class="btn-secondary mt-1">CONNECT MAILBOX</button>
                     </div>
-                </div>
-                
-                <div class="disclaimer mt-2">
-                    <p class="tiny-text text-secondary italic">🔒 Data Privacy: Your credentials are encrypted and never shared. Audit logs stored locally on your command center instance.</p>
                 </div>
             </div>
         </div>
@@ -72,9 +68,10 @@
 
     <main>
         <section class="overview">
+            <!-- Fix 6: Metrics tied to real IDs -->
             <div class="card stat-card glass">
                 <div class="stat-content">
-                    <label>Total Intelligence Extracted</label>
+                    <label>Total Intel Extracted</label>
                     <h2 id="intel-count">0</h2>
                 </div>
                 <div class="stat-icon">📈</div>
@@ -89,23 +86,20 @@
             <div class="card stat-card glass">
                 <div class="stat-content">
                     <label>Detection Confidence</label>
-                    <h2 id="avg-confidence">99.8%</h2>
+                    <h2 id="avg-confidence">0%</h2>
                 </div>
                 <div class="stat-icon">🎯</div>
             </div>
             <div class="card stat-card glass">
                 <div class="stat-content">
                     <label>SCAM RISK LEVEL</label>
-                    <div style="display: flex; align-items: baseline; gap: 8px;">
-                        <h2 id="risk-score">0</h2>
-                        <span class="text-secondary" style="font-size: 0.8rem;">/100</span>
-                    </div>
+                    <h2 id="risk-level-display">SAFE</h2>
                 </div>
                 <div class="stat-icon">❗</div>
             </div>
             <div class="card stat-card glass">
                 <div class="stat-content">
-                    <label>Active Scam Type</label>
+                    <label>Last Scam Type</label>
                     <h2 id="scam-type-display">-</h2>
                 </div>
                 <div class="stat-icon">📂</div>
@@ -120,8 +114,6 @@
         </section>
 
         <div class="dashboard-grid">
-            <!-- Simulated Live Feed -->
-            <!-- System Analysis & Response Panel -->
             <section class="console-box glass" id="left-system-panel">
                 <div class="box-header">
                     <h3 id="left-panel-title">SYSTEM CONSOLE</h3>
@@ -130,113 +122,36 @@
                         <button id="clear-console">CLEAR</button>
                     </div>
                 </div>
-                <!-- Default Console View -->
                 <div id="console-stream" class="console-content mono">
                     <div class="line system">[SYSTEM] Honeypot Core initialized...</div>
-                    <div class="line system">[SYSTEM] Waiting for incoming scam vectors...</div>
                 </div>
-                <!-- Deep Analysis View (Hidden by default) -->
                 <div id="analysis-panel" class="console-content" style="display: none; padding: 1.5rem;">
-                    <div id="analysis-result-content">
-                        <p class="text-secondary italic">Select a message from the right panel to analyze...</p>
-                    </div>
+                    <div id="analysis-result-content"></div>
                 </div>
             </section>
 
             <section class="console-box glass" id="chat-preview-section">
                 <div class="box-header">
-                    <h3>LIVE ENGAGEMENT CHAT</h3>
-                    <button id="restart-chat" class="btn-tiny" style="background: rgba(255, 71, 87, 0.2); color: #ff4757; margin-left: auto; margin-right: 15px; border-radius: 4px; border: 1px solid rgba(255, 71, 87, 0.3); font-size: 0.65rem; cursor: pointer;">RESTART</button>
-                    <div class="online-indicator">
-                        <span class="pulse"></span>
-                        LIVE
-                    </div>
+                    <h3>LIVE CHAT ENGAGEMENT</h3>
+                    <button id="restart-chat" class="btn-tiny" style="background: rgba(255, 71, 87, 0.2); color: #ff4757; margin-left: auto;">RESTART</button>
                 </div>
                 <div id="chat-stream" class="chat-content">
                     <div class="chat-placeholder">No active engagement selected</div>
                 </div>
-            </section>
-
-            <!-- Test Simulator -->
-            <section class="simulator-box glass">
-                <div class="box-header">
-                    <h3>SCAM SIMULATOR</h3>
-                </div>
-                <div class="simulator-content">
-                    <div class="input-group">
-                        <label>Active Persona (Override)</label>
-                        <select id="persona-override">
-                            <option value="">-- Deterministic (Default) --</option>
-                            <option value="Aman Gupta">Aman Gupta (Corporate)</option>
-                            <option value="Mrs. Revathi">Mrs. Revathi (Retired)</option>
-                            <option value="Siddharth">Siddharth (Student)</option>
-                            <option value="Anita">Anita (Mom)</option>
-                            <option value="Uncle Ji (Mr. Khanna)">Uncle Ji (Elderly)</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Incoming Message</label>
-                        <textarea id="test-message" placeholder="Paste a suspected scam message here..."></textarea>
-                    </div>
-                    <div class="input-group">
-                        <label>Test Presets</label>
-                        <select id="test-presets">
-                            <option value="">-- Select a Scam Pattern --</option>
-                            <option value="electricity">Electricity Bill Disconnection</option>
-                            <option value="kyc">KYC Verification Urgent</option>
-                            <option value="lottery">WhatsApp Lottery Win</option>
-                            <option value="upi">UPI Error - Refund Request</option>
-                            <option value="job">Work from Home - YouTube Likes</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label>Session ID (Optional)</label>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="test-session" placeholder="Auto-generated">
-                            <button id="new-session" class="btn-secondary" style="white-space: nowrap;">NEW SESSION</button>
-                        </div>
-                    </div>
-                    <button id="run-simulation" class="btn-primary">
-                        <span>ACTIVATE AGENT</span>
-                        <div class="btn-glow"></div>
-                    </button>
+                <!-- Fix 8: Live Chat Input -->
+                <div class="chat-input-area">
+                    <input type="text" id="live-chat-input" placeholder="Type a message as the victim...">
+                    <button id="send-chat-btn">SEND</button>
                 </div>
             </section>
         </div>
 
         <section class="intel-summary glass">
             <div class="box-header">
-                <h3>DECEPTION STRATEGY INSIGHTS</h3>
-            </div>
-            <div class="strategy-content mono" id="strategy-insights">
-                <p class="text-secondary italic">Select a session or run a simulation to see AI deception logic...</p>
-            </div>
-        </section>
-
-        <section class="intel-summary glass">
-            <div class="box-header">
-                <h3>DEEP ANALYSIS: SELECTED EMAIL</h3>
-            </div>
-            <div id="deep-analysis-view" class="strategy-content">
-                <p class="text-secondary italic">Click on an email from the repository or console to analyze why it was flagged...</p>
-            </div>
-        </section>
-
-        <section class="intel-summary glass">
-            <div class="box-header">
-                <h3>THREAT RADAR (DISTRIBUTION)</h3>
-            </div>
-            <div id="type-stats" class="radar-content">
-                <div class="empty-state">Collecting threat intelligence...</div>
-            </div>
-        </section>
-
-        <section class="intel-summary glass">
-            <div class="box-header">
-                <h3>INBOX SCAN MONITOR (LAST 50 MESSAGES)</h3>
+                <h3>INBOX SCAN MONITOR (REAL DATA ONLY)</h3>
             </div>
             <div class="table-container">
-                <table id="scan-results-table">
+                <table>
                     <thead>
                         <tr>
                             <th>SENDER</th>
@@ -247,7 +162,7 @@
                     </thead>
                     <tbody id="scan-tbody">
                         <tr class="empty-state">
-                            <td colspan="4">Run a scan to analyze your inbox.</td>
+                            <td colspan="4">No emails found. Click SCAN to start.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -269,18 +184,14 @@
                             <th>TIMESTAMP</th>
                         </tr>
                     </thead>
-                    <tbody id="intel-tbody">
-                        <tr class="empty-state">
-                            <td colspan="4">No intelligence extracted yet. Use the simulator to start.</td>
-                        </tr>
-                    </tbody>
+                    <tbody id="intel-tbody"></tbody>
                 </table>
             </div>
         </section>
     </main>
 
     <footer>
-        <p>&copy; 2026 Honeypot.AI | Built for GUVI Hackathon</p>
+        <p>&copy; 2026 Honeypot.AI | Built for Advanced Scam Intelligence</p>
     </footer>
 
     <script src="app.js"></script>

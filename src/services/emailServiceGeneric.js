@@ -7,8 +7,13 @@ const intelligenceExtractor = require('./intelligenceExtractor');
 const intelligenceStore = require('../utils/intelligenceStore');
 
 class EmailServiceGeneric {
-    constructor() {
-        this.config = {
+    /**
+     * Scans any inbox using provided IMAP configuration.
+     * @param {Object} customConfig Optional IMAP configuration.
+     * @param {number} limit 
+     */
+    async scanInbox(customConfig = null, limit = 20) {
+        const config = customConfig || {
             imap: {
                 user: process.env.EMAIL_USER,
                 password: process.env.EMAIL_PASS,
@@ -16,105 +21,89 @@ class EmailServiceGeneric {
                 port: process.env.EMAIL_IMAP_PORT || 993,
                 tls: true,
                 tlsOptions: { rejectUnauthorized: false },
-                authTimeout: 3000
+                authTimeout: 5000
             }
         };
-    }
 
-    async scanInbox(limit = 50) {
-        if (!this.config.imap.user || !this.config.imap.password) {
-            throw new Error('EMAIL_USER or EMAIL_PASS not configured in .env');
+        if (!config.imap.user || !config.imap.password) {
+            throw new Error('IMAP credentials not provided.');
         }
 
-        const connection = await imap.connect(this.config);
-        await connection.openBox('INBOX');
+        let connection;
+        try {
+            connection = await imap.connect(config);
+            await connection.openBox('INBOX');
 
-        const searchCriteria = ['UNSEEN'];
-        const fetchOptions = { bodies: ['HEADER', 'TEXT'], struct: true, markSeen: true };
+            const searchCriteria = ['UNSEEN'];
+            const fetchOptions = { bodies: ['HEADER', 'TEXT'], struct: true, markSeen: true };
 
-        const messages = await connection.search(searchCriteria, fetchOptions);
-        const results = [];
+            const messages = await connection.search(searchCriteria, fetchOptions);
+            const results = [];
 
-        // Sort to get newest first
-        messages.reverse();
-        const topMessages = messages.slice(0, limit);
+            // Sort to get newest first
+            messages.reverse();
+            const topMessages = messages.slice(0, limit);
 
-        for (const message of topMessages) {
-            const all = message.parts.find(part => part.which === '');
-            const id = message.attributes.uid;
-            const idHeader = message.parts.find(part => part.which === 'HEADER');
-            const subject = idHeader.body.subject ? idHeader.body.subject[0] : '(No Subject)';
-            const from = idHeader.body.from ? idHeader.body.from[0] : 'Unknown';
+            for (const message of topMessages) {
+                const id = message.attributes.uid;
+                const idHeader = message.parts.find(part => part.which === 'HEADER');
+                const subject = idHeader.body.subject ? idHeader.body.subject[0] : '(No Subject)';
+                const from = idHeader.body.from ? idHeader.body.from[0] : 'Unknown';
+                const bodyPart = message.parts.find(part => part.which === 'TEXT');
+                const body = bodyPart ? bodyPart.body : '';
+                const snippet = body.substring(0, 1000).replace(/<[^>]*>?/gm, '');
 
-            // Extract body text
-            const bodyPart = message.parts.find(part => part.which === 'TEXT');
-            const body = bodyPart ? bodyPart.body : '';
-            
-            // Clean up body (basic)
-            const snippet = body.substring(0, 1000).replace(/<[^>]*>?/gm, '');
-
-            // Analysis
-            await new Promise(r => setTimeout(r, 1500));
-            const detection = await scamDetector.detect({ text: snippet, subject });
-            
-            const analysisResult = {
-                id: id,
-                from: from,
-                subject: subject,
-                isScam: detection.isScam,
-                reason: detection.reason,
-                riskScore: detection.riskScore || 0,
-                status: 'analyzed',
-                snippet: snippet
-            };
-
-            if (detection.isScam) {
-                console.log(`[EmailServiceGeneric] SCAM DETECTED in email from ${from}: ${detection.reason}`);
+                const detection = await scamDetector.detect({ text: snippet, subject });
                 
-                // Engage Scam Agent
-                const response = await agentEngine.generateResponse(id.toString(), { text: snippet }, [], { channel: 'Email', sender: from });
-                
-                if (response && response.text) {
-                    // Extract Intelligence
-                    const intelligence = await intelligenceExtractor.extract([{ text: snippet }]);
-                    const agentNotes = `[GENERIC EMAIL SCAN] From: ${from} | Persona: ${response.sessionData.persona.name} | Reason: ${detection.reason}`;
+                let analysisResult = {
+                    id: id,
+                    from: from,
+                    subject: subject,
+                    isScam: detection.isScam,
+                    reason: detection.reason,
+                    riskScore: detection.confidenceScore || 0,
+                    status: 'analyzed',
+                    snippet: snippet
+                };
+
+                if (detection.isScam) {
+                    const response = await agentEngine.generateResponse(id.toString(), { text: snippet }, [], { channel: 'IMAP', sender: from });
                     
-                    await intelligenceStore.save(id.toString(), intelligence, agentNotes);
-                    
-                    // Send Reply
-                    await this.sendReply(from, `Re: ${subject}`, response.text);
-                    analysisResult.status = 'replied';
-                    analysisResult.agentResponse = response.text;
+                    if (response && response.text) {
+                        const intelligence = await intelligenceExtractor.extract([{ text: snippet }]);
+                        await intelligenceStore.save(id.toString(), intelligence, `[IMAP] From: ${from}`);
+                        
+                        await this.sendReply(config, from, `Re: ${subject}`, response.text);
+                        analysisResult.status = 'replied';
+                        analysisResult.agentResponse = response.text;
+                    }
                 }
+                results.push(analysisResult);
             }
-
-            results.push(analysisResult);
+            return results;
+        } finally {
+            if (connection) connection.end();
         }
-
-        connection.end();
-        return results;
     }
 
-    async sendReply(to, subject, body) {
+    async sendReply(config, to, subject, body) {
         let transporter = nodemailer.createTransport({
-            host: process.env.EMAIL_SMTP_HOST || this.config.imap.host.replace('imap.', 'smtp.'),
-            port: process.env.EMAIL_SMTP_PORT || 465,
+            host: config.imap.host.replace('imap.', 'smtp.'),
+            port: 465,
             secure: true, 
             auth: {
-                user: this.config.imap.user,
-                pass: this.config.imap.password,
+                user: config.imap.user,
+                pass: config.imap.password,
             },
         });
 
         await transporter.sendMail({
-            from: `"Security Honeypot" <${this.config.imap.user}>`,
+            from: `"Security Honeypot" <${config.imap.user}>`,
             to: to,
             subject: subject,
             text: body,
             html: body.replace(/\n/g, '<br>')
         });
-
-        console.log(`[EmailServiceGeneric] Reply sent to ${to}`);
     }
 }
 
