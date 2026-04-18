@@ -21,7 +21,6 @@
             <h1>HONEYPOT<span>.AI</span></h1>
         </div>
         <div class="status-badge" style="gap: 15px;">
-            <!-- Fix 2: Removed Simulation button from main nav -->
             <button id="config-mailbox-btn" class="btn-secondary" style="border-radius: 20px; padding: 4px 12px; font-size: 0.65rem; border-color: #fbbc04; color: #fbbc04;">CONFIGURE ACCESS</button>
             <button id="email-scan-btn" class="btn-secondary" style="border-radius: 20px; padding: 4px 12px; font-size: 0.65rem; border-color: #34a853; color: #34a853;">SCAN IMAP</button>
             <button id="gmail-scan-btn" class="btn-secondary" style="border-radius: 20px; padding: 4px 12px; font-size: 0.65rem; border-color: #ea4335; color: #ea4335;">SCAN GMAIL API</button>
@@ -33,33 +32,57 @@
 
     <!-- Global Connection Config (Modal style) -->
     <div id="config-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content glass">
+        <div class="modal-content glass" style="max-width: 500px;">
             <div class="box-header">
-                <h3>GLOBAL ACCESS CONFIGURATION</h3>
+                <h3>CONNECTION SETTINGS</h3>
                 <button id="close-config-btn" class="btn-tiny" style="color: #ff4757; font-weight: bold;">[X] CLOSE</button>
             </div>
-            <div class="modal-body">
-                <p class="text-secondary small-text mb-1">Connect your Gmail via OAuth2 or provide your own IMAP credentials to start real-time monitoring.</p>
-                
-                <div class="config-grid">
-                    <div class="config-card">
-                        <span class="platform-icon">📦</span>
-                        <h4>GMAIL (OAUTH 2.0)</h4>
-                        <p class="text-secondary tiny-text">Sign in securely with your Google Account.</p>
-                        <!-- Fix 1: Enabled OAuth flow -->
-                        <a href="/api/auth/google" class="btn-primary mt-1" style="text-decoration: none; text-align: center; display: block;">LOGIN WITH GOOGLE</a>
-                    </div>
-
-                    <div class="config-card">
-                        <span class="platform-icon">🌐</span>
-                        <h4>ANY EMAIL (IMAP)</h4>
-                        <p class="text-secondary tiny-text">Connect to Yahoo, Outlook, or private mailboxes.</p>
-                        <div class="input-group-tiny mt-1">
-                            <input type="text" id="imap-host" placeholder="IMAP Server (e.g., imap.gmail.com)">
-                            <input type="text" id="imap-user" placeholder="Email Address">
-                            <input type="password" id="imap-pass" placeholder="App Password">
+            <div class="modal-body" style="padding: 20px;">
+                <!-- PRIMARY: GMAIL OAUTH -->
+                <div class="connection-section">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                        <span style="font-size: 2rem;">📦</span>
+                        <div>
+                            <h4 style="margin: 0; color: #fff;">Gmail Secure Connect</h4>
+                            <p class="text-secondary tiny-text">Recommended for most users. Fast, secure, and no password sharing.</p>
                         </div>
-                        <button id="connect-imap-btn" class="btn-secondary mt-1">CONNECT MAILBOX</button>
+                    </div>
+                    <a href="/api/auth/google" class="btn-primary" style="text-decoration: none; text-align: center; display: block; width: 100%;">
+                        CONTINUE WITH GOOGLE
+                    </a>
+                </div>
+
+                <div id="auth-error-msg" style="display: none; color: #ff4757; font-size: 0.75rem; margin-top: 10px; background: rgba(255, 71, 87, 0.1); padding: 8px; border-radius: 4px;">
+                    ⚠️ Authentication failed. Please try again or use Advanced Options.
+                </div>
+
+                <hr style="margin: 25px 0; border: 0; border-top: 1px solid rgba(255,255,255,0.1);">
+
+                <!-- SECONDARY: ADVANCED IMAP -->
+                <div class="advanced-toggle" style="text-align: center;">
+                    <button id="toggle-advanced-btn" style="background: none; border: none; color: var(--accent-primary); cursor: pointer; font-size: 0.75rem; text-decoration: underline;">
+                        Advanced Options (Manual IMAP)
+                    </button>
+                </div>
+
+                <div id="advanced-config" style="display: none; margin-top: 20px;">
+                    <div class="config-card" style="background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.05);">
+                        <h5 style="margin-bottom: 10px;">IMAP Configuration</h5>
+                        <div class="input-group-tiny">
+                            <label class="tiny-text text-secondary">IMAP Server</label>
+                            <input type="text" id="imap-host" placeholder="e.g. imap.gmail.com">
+                            <p class="tiny-text" style="color: #666; margin-bottom: 10px;">Hints: Gmail (imap.gmail.com), Outlook (outlook.office365.com)</p>
+                            
+                            <label class="tiny-text text-secondary">Email Address</label>
+                            <input type="text" id="imap-user" placeholder="yourname@email.com">
+                            
+                            <label class="tiny-text text-secondary">App Password</label>
+                            <input type="password" id="imap-pass" placeholder="••••••••••••••••">
+                            <div style="background: rgba(251, 188, 4, 0.1); padding: 8px; border-radius: 4px; margin-top: 10px;">
+                                <p class="tiny-text" style="color: #fbbc04; margin: 0;">💡 <strong>Note:</strong> Regular passwords won't work. Use an "App Password" from your account security settings.</p>
+                            </div>
+                        </div>
+                        <button id="connect-imap-btn" class="btn-secondary mt-1" style="width: 100%;">CONNECT VIA IMAP</button>
                     </div>
                 </div>
             </div>
@@ -68,7 +91,6 @@
 
     <main>
         <section class="overview">
-            <!-- Fix 6: Metrics tied to real IDs -->
             <div class="card stat-card glass">
                 <div class="stat-content">
                     <label>Total Intel Extracted</label>
@@ -138,7 +160,6 @@
                 <div id="chat-stream" class="chat-content">
                     <div class="chat-placeholder">No active engagement selected</div>
                 </div>
-                <!-- Fix 8: Live Chat Input -->
                 <div class="chat-input-area">
                     <input type="text" id="live-chat-input" placeholder="Type a message as the victim...">
                     <button id="send-chat-btn">SEND</button>

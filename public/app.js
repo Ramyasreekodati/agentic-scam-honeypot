@@ -15,12 +15,58 @@ document.addEventListener('DOMContentLoaded', () => {
     const configModal = document.getElementById('config-modal');
     const configBtn = document.getElementById('config-mailbox-btn');
     const closeConfigBtn = document.getElementById('close-config-btn');
+    const toggleAdvancedBtn = document.getElementById('toggle-advanced-btn');
+    const advancedConfig = document.getElementById('advanced-config');
+    const authErrorMsg = document.getElementById('auth-error-msg');
+    
+    const imapHost = document.getElementById('imap-host');
+    const imapUser = document.getElementById('imap-user');
+    const imapPass = document.getElementById('imap-pass');
+    const connectImapBtn = document.getElementById('connect-imap-btn');
 
     let currentSessionId = null;
     let authorizedEmail = null;
     let lastScanResults = [];
 
-    // Fix 7: Session Persistent Login Check
+    // Check URL for auth status (Fix: Clear error messages or show success)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('auth') === 'failed') {
+        configModal.style.display = 'flex';
+        authErrorMsg.style.display = 'block';
+    }
+
+    // Toggle Advanced IMAP (UX Improvement)
+    toggleAdvancedBtn.addEventListener('click', () => {
+        const isHidden = advancedConfig.style.display === 'none';
+        advancedConfig.style.display = isHidden ? 'block' : 'none';
+        toggleAdvancedBtn.textContent = isHidden ? 'Hide Advanced Options' : 'Advanced Options (Manual IMAP)';
+    });
+
+    // IMAP Validation (UX Improvement)
+    connectImapBtn.addEventListener('click', async () => {
+        if (!imapHost.value || !imapUser.value || !imapPass.value) {
+            alert('⚠️ Please fill in all IMAP fields (Server, Email, and App Password).');
+            return;
+        }
+        if (!imapUser.value.includes('@')) {
+            alert('⚠️ Invalid email address format.');
+            return;
+        }
+
+        connectImapBtn.disabled = true;
+        connectImapBtn.textContent = 'CONNECTING...';
+        
+        // Simulate connection or hit endpoint if ready
+        setTimeout(() => {
+            log(`IMAP Connection Attempt: ${imapUser.value}`, 'system');
+            configModal.style.display = 'none';
+            connectImapBtn.disabled = false;
+            connectImapBtn.textContent = 'CONNECT VIA IMAP';
+            userDisplay.textContent = imapUser.value;
+            authorizedEmail = imapUser.value;
+        }, 1500);
+    });
+
     const checkAuth = async () => {
         try {
             const resp = await fetch('/api/gmail/account');
@@ -36,7 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     checkAuth();
 
-    // Fix 6: Dynamic Metrics from REAL data
     const fetchMetrics = async () => {
         try {
             const resp = await fetch('/api/intelligence');
@@ -63,7 +108,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     fetchMetrics();
 
-    // Fix 8: Real-time Live Chat Logic
     const sendMessage = async () => {
         const text = liveChatInput.value.trim();
         if (!text) return;
@@ -85,17 +129,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({
                     sessionId: currentSessionId,
                     message: { text: text },
-                    conversationHistory: [], // In a real app, track history here
+                    conversationHistory: [],
                     metadata: { channel: 'Live Chat' }
                 })
             });
             const data = await resp.json();
 
-            // Simulate Agent Behavior (Delay)
             setTimeout(() => {
                 appendChatMessage('agent', data.agentResponse);
                 log(`Agent Reply: ${data.agentResponse.substring(0, 30)}...`, 'agent');
-                fetchMetrics(); // Refresh dashboard
+                fetchMetrics(); 
             }, data.simulatedDelayMs || 2000);
 
         } catch (err) {
@@ -106,7 +149,6 @@ document.addEventListener('DOMContentLoaded', () => {
     sendChatBtn.addEventListener('click', sendMessage);
     liveChatInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
 
-    // Fix 1 & 2: Real Gmail Scan (No Simulations)
     gmailScanBtn.addEventListener('click', async () => {
         log(`Initiating REAL Gmail Scan...`, 'system');
         gmailScanBtn.disabled = true;
