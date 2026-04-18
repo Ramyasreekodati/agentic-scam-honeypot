@@ -21,7 +21,7 @@ router.post('/message', authMiddleware, async (req, res) => {
   }
 
   try {
-    // 1. Detect Scam Intent
+    // 1. Detect Scam Intent (Upgraded multi-signal)
     const detection = await scamDetector.detect(message, conversationHistory);
 
     if (!detection.isScam) {
@@ -29,57 +29,58 @@ router.post('/message', authMiddleware, async (req, res) => {
         status: 'success',
         scamDetected: false,
         message: 'No scam detected',
-        reason: detection.reason
+        reason: detection.reason,
+        confidenceScore: detection.confidenceScore
       });
     }
 
-    const { isScam, reason, confidence, riskScore } = detection;
+    const { isScam, reason, confidenceScore, signals } = detection;
 
-    // 2. Engage Agent
+    // 2. Engage Agent (Strategy-driven)
     let agentResult = await agentEngine.generateResponse(sessionId, message, conversationHistory, metadata);
     
     // Check if AI failed (e.g. Quota/Connection error)
     if (!agentResult) {
         const session = agentEngine.getSession(sessionId);
         agentResult = {
-            text: `Wait, my internet is acting up. Can you say that again? I missed what you meant by ${message.text.substring(0, 20)}...`,
-            sessionData: session || { persona: { name: 'Assistant' }, startTime: Date.now(), messageCount: 1 }
+            text: `Oh wait... my phone is acting up. Can you repeat that? I missed what you meant about ${message.text.substring(0, 15)}...`,
+            sessionData: session || { persona: { name: 'Assistant' }, startTime: Date.now(), messageCount: 1 },
+            metadata: { phase: 'ERROR_RECOVERY', delayMs: 1000 }
         };
     }
-    const { text, sessionData } = agentResult;
+    const { text, sessionData, metadata: agentMetadata } = agentResult;
 
-    // 3. Extract Intelligence
-    // Combine history and current message for extraction
+    // 3. Extract Intelligence (Forensic extraction)
     const fullHistory = [...(conversationHistory || []), message];
     const intelligence = await intelligenceExtractor.extract(fullHistory);
 
-    // 4. Summarize behavior for agentNotes
-    const agentNotes = `SCAM TYPE: ${intelligence.scamType} | STRATEGY: ${intelligence.nextBestAction} | TACTICS: ${intelligence.suspiciousKeywords.join(', ')} | PERSONA: ${sessionData.persona.name}`;
+    // 4. Summarize forensic insights for agentNotes
+    const agentNotes = `[PROD-GRADE] SCAM: ${intelligence.scamType} | PHASE: ${agentMetadata.phase} | TACTICS: ${intelligence.tactics?.join(', ') || 'N/A'} | LOC: ${intelligence.locationInfo?.join(', ') || 'Unknown'}`;
 
     // Save to persistent store
     await intelligenceStore.save(sessionId, intelligence, agentNotes);
 
-    // 5. Prepare Response
+    // 5. Prepare Response (Matches Production requirements)
     const responseBody = {
       status: 'success',
       scamDetected: true,
       detectionReason: reason,
-      detectionConfidence: confidence,
-      riskScore: riskScore || 0,
+      detectionConfidence: confidenceScore,
+      signals: signals,
       engagementMetrics: {
         engagementDurationSeconds: Math.floor((Date.now() - sessionData.startTime) / 1000),
-        totalMessagesExchanged: (conversationHistory?.length || 0) + 2 // History + current + our reply
+        totalMessagesExchanged: (conversationHistory?.length || 0) + 2,
+        currentPhase: agentMetadata.phase
       },
       extractedIntelligence: intelligence,
       agentNotes: agentNotes,
-      agentResponse: text, // Original key
-      agentReply: text // Blueprint key compatibility
+      agentResponse: text, 
+      simulatedDelayMs: agentMetadata.delayMs || 2000
     };
 
-    // 6. Callback logic (Heuristic: Send after 5 messages or if we have bank/UPI info)
+    // 6. Callback logic (Send after 5 messages or if we have bank/UPI info)
     const hasCriticalInfo = intelligence.bankAccounts.length > 0 || intelligence.upiIds.length > 0;
     if (sessionData.messageCount >= 5 || hasCriticalInfo) {
-      // Run as background task to not block response
       callbackService.sendFinalResult(
         sessionId,
         true,

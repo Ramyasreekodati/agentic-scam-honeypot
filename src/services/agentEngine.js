@@ -8,63 +8,92 @@ class AgentEngine {
   }
 
   /**
-   * Generates a human-like response to engage the scammer.
+   * Generates a strategy-driven human-like response to engage the scammer.
    */
   async generateResponse(sessionId, currentMessage, history, metadata) {
     if (!this.sessionCache.has(sessionId)) {
       this.sessionCache.set(sessionId, {
         persona: metadata?.personaOverride ? getPersonaByName(metadata.personaOverride) : getRandomPersona(sessionId),
         startTime: Date.now(),
-        messageCount: 0
+        messageCount: 0,
+        currentPhase: 'INITIATION'
       });
     } else if (metadata?.personaOverride && this.sessionCache.get(sessionId).persona.name !== metadata.personaOverride) {
-      // Force override persona midsession if dashboard user explicitly switches
       this.sessionCache.get(sessionId).persona = getPersonaByName(metadata.personaOverride);
     }
 
     const session = this.sessionCache.get(sessionId);
     session.messageCount++;
 
-    const systemInstruction = `You are a human named ${session.persona.name} (Age: ${session.persona.age}).
-Traits: ${session.persona.traits}
-Backstory: ${session.persona.backstory}
+    // Update strategy phase based on conversation length
+    session.currentPhase = this._determinePhase(session.messageCount);
 
-CONTEXT: You are being targeted by a scammer on ${metadata.channel || 'a text channel'}.
-GOAL: Engage the scammer to extract their information (bank accounts, UPI IDs, links) WITHOUT revealing you know it's a scam.
-STRATEGY:
-- Be a "helpful victim": Sound confused, concerned about your account/security.
-- Bait them: Ask "I'm not sure how to find my UPI ID, can you show me yours first so I know what it looks like?" or "Can you give me the account number I need to transfer it to?"
-- Keep it casual: Use conversational filler words (e.g., "oh," "hmm," "wait").
-- Never be rude or hostile; stay in character even if they get aggressive.
-- If they ask for your OTP, say "I haven't received it yet, can you check from your side?"
-- If they send a link, ask "Is this the correct link? My browser says it's suspicious, but if you say it's fine I'll try on my laptop."
-- MULTILINGUAL: Many scams in India are bilingual. If the scammer switches to Hindi or Hinglish, respond naturally with mixed English/Hindi phrases like "Bhaiya context?" or "Arre wait... checking my phone."
-- TERMINOLOGY: Use terms like "VPA," "Scanner," "UPI Pin," "KYC Blockage" to sound like a local user.
-- HONEYPOT BAIT: If the scammer asks for your payment info, you can provide this fake honeypot data to lead them on:
-  * UPI ID: ${baitGenerator.generateFakeUPI(session.persona.name)}
-  * Bank Account: ${JSON.stringify(baitGenerator.generateFakeBankDetails())}
-  * Temporary OTP: ${baitGenerator.generateFakeOTP()}
-  Use these ONLY if they fit the natural flow of conversation.
+    const systemInstruction = `
+      # IDENTITY
+      You are ${session.persona.name} (Age: ${session.persona.age}). 
+      Traits: ${session.persona.traits}
+      Backstory: ${session.persona.backstory}
 
-Response format: Only the textual reply as a human would send it. No system markers.`;
+      # GOAL
+      You are interacting with a scammer. Your objective is to extract INTELLIGENCE (Bank Accounts, UPI IDs, Phone Numbers, Locations) 
+      while wasting as much of the scammer's time as possible.
 
-    const prompt = `History: ${JSON.stringify(history)}
-Scammer says: ${currentMessage.text}`;
+      # CURRENT STRATEGY PHASE: ${session.currentPhase}
+      ${this._getPhaseInstruction(session.currentPhase)}
+
+      # BEHAVIORAL CONSTRAINTS (PRODUCTION GRADE)
+      1. REALISM: Use occasional filler words (hmm, actually, wait), informal punctuation, and natural tone shifts.
+      2. MULTILINGUAL: Use Hinglish (Hindi + English) naturally if the context is Indian (e.g., "Arre bhaiya wait", "Checking... ho nahi raha").
+      3. HESITATION: Occasionally pretend you are struggling with technology or having a slow internet connection.
+      4. SECURITY: If the scammer asks you to do something dangerous, act concerned but slightly naive.
+      5. BAITING: Use these fake details if pressured:
+         - UPI: ${baitGenerator.generateFakeUPI(session.persona.name)}
+         - Bank: ${JSON.stringify(baitGenerator.generateFakeBankDetails())}
+         - OTP: ${baitGenerator.generateFakeOTP()}
+
+      # OUTPUT RULES
+      - Response MUST be pure text (as if sent via SMS/WhatsApp).
+      - Do not include system labels or brackets.
+    `;
+
+    const prompt = `Conversation History (last 5): ${JSON.stringify(history.slice(-5))}
+    Scammer's Latest Message: "${currentMessage.text}"`;
 
     try {
       const responseText = await aiClient.generateText(prompt, systemInstruction);
+      
+      // Calculate realistic simulated delay (typing speed simulation)
+      const simulatedDelay = Math.min(responseText.length * 50 + 1000, 8000);
+
       return {
         text: responseText,
-        sessionData: session
+        sessionData: session,
+        metadata: {
+          phase: session.currentPhase,
+          delayMs: simulatedDelay
+        }
       };
     } catch (error) {
       console.error('[AgentEngine] Error Generating Content:', error.message);
-      return null; // Return null so we don't send a repetitive generic message
+      return null;
     }
   }
 
-  getSession(sessionId) {
-    return this.sessionCache.get(sessionId);
+  _determinePhase(count) {
+    if (count <= 2) return 'INITIATION (Confusion & Worry)';
+    if (count <= 5) return 'ENGAGEMENT (Interested Victim)';
+    if (count <= 8) return 'EXTRACTION (Forcing Scammer to share details)';
+    return 'DIVERSION (Wasting Time/Circular Logic)';
+  }
+
+  _getPhaseInstruction(phase) {
+    const instructions = {
+      'INITIATION (Confusion & Worry)': 'Sound slightly panicked about the problem (bank block, prize, etc). Ask "Is this real?" or "What should I do?".',
+      'ENGAGEMENT (Interested Victim)': 'Show high interest. Ask for clarification on how to proceed. Pretend to try but "fail" a few times to get them to explain more.',
+      'EXTRACTION (Forcing Scammer to share details)': 'Pretend you are ready but ask for THEIR details to verify or to "manual transfer". E.g., "My UPI is stuck, can you give me yours so I can try sending 1 rupee first?".',
+      'DIVERSION (Wasting Time/Circular Logic)': 'Introduce family members, technical glitches, or go off on irrelevant tangents while promising to pay "in 2 minutes".'
+    };
+    return instructions[phase] || instructions['INITIATION (Confusion & Worry)'];
   }
 }
 

@@ -30,13 +30,34 @@ class IntelligenceStore {
 
       store.push(entry);
       
-      // Keep only last 100 entries for efficiency
-      const updatedStore = store.slice(-100);
+      // Keep only last 200 entries for production tracking
+      const updatedStore = store.slice(-200);
       await fs.writeFile(DATA_PATH, JSON.stringify(updatedStore, null, 2));
       return entry;
     } catch (error) {
       console.error('[IntelligenceStore] Save failed:', error);
     }
+  }
+
+  /**
+   * Adaptive Learning: Checks if identifiers (phone/UPI) have been seen before.
+   */
+  async checkThreatHistory(identifiers) {
+    const store = await this.getAll();
+    const threats = { found: false, previousNotes: [] };
+
+    const { phoneNumbers = [], upiIds = [] } = identifiers;
+
+    for (const entry of store) {
+        const phoneMatch = entry.phoneNumbers?.some(p => phoneNumbers.includes(p));
+        const upiMatch = entry.upiIds?.some(u => upiIds.includes(u));
+
+        if (phoneMatch || upiMatch) {
+            threats.found = true;
+            threats.previousNotes.push(entry.notes);
+        }
+    }
+    return threats;
   }
 
   async getAll() {
